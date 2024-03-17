@@ -91,7 +91,7 @@ def main(
                 newline = f"Raining {DAY_PARSER[iday]} "
                 newline += ", ".join(
                     [
-                        f"{TIME_PARSER[ir]} ({depth[iday][ir]}mm {confidence[iday][ir]})"
+                        f"{TIME_PARSER[ir]} ({depth[iday][ir]}mm {confidence[iday][ir]:02d}%)"
                         for ir, r in enumerate(raining[iday])
                         if r
                     ]
