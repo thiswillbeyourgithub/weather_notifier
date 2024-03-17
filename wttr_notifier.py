@@ -106,4 +106,20 @@ def main(
 
 
 if __name__ == "__main__":
-    fire.Fire(main)
+    kwargs = fire.Fire(lambda **kwargs: kwargs)
+    if "help" in kwargs:
+        print(help(main))
+        raise SystemExit()
+    try:
+        out = main(**kwargs)
+        if out:
+            print(out)
+    except Exception as err:
+        if "ntfy_url" in kwargs:
+            send_notif(
+                kwargs["ntfy_url"],
+                "Weather notifier - Error",
+                f"Error when parsing weather: {err}",
+            )
+        else:
+            raise
