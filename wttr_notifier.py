@@ -64,6 +64,7 @@ def main(
             else:
                 buffmm[-1] += float(hour["precipMM"])
                 buffconf[-1] += int(hour["chanceofrain"])
+                buffconf[-1] /= 2
         assert len(buffmm) == 4 and len(buffconf) == 4
 
         for br in buffmm:
