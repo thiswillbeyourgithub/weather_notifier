@@ -46,12 +46,7 @@ def main(
             timeout=timeout,
         )
     except requests.exceptions.ReadTimeout:
-        if ntfy_url:
-            send_notif(
-                ntfy_url, "Wttr.in timeout", f"Couldn't reach wttr.in after {timeout}s"
-            )
-        else:
-            return "Wttr.in timed out after {timeout}s"
+        raise Exception(f"Couldn't reach wttr.in after {timeout}s")
 
     data = json.loads(response.text)
 
