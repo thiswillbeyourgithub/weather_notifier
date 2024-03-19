@@ -1,3 +1,4 @@
+import time
 import json
 import requests
 import fire
@@ -21,6 +22,7 @@ def main(
     rain_threshold_mm=1.0,
     wttr_url="http://wttr.in/",
     timeout_s=5,
+    retry_for_an_hour=True,
 ):
     """
     Simple script to parse wttr.in to know if it's going to rain.
@@ -37,16 +39,37 @@ def main(
     wttr_url: str, default 'http://wttr.in/'
     timeout_s: int, default 5
         timeout for wttr.in in second
+    retry_for_an_hour: bool, default True
+        if True, will retry every 5 minutes for 1h
     """
     # getting data
     url = wttr_url + location + "?format=j1"
-    try:
-        response = requests.get(
-            url,
-            timeout=timeout_s,
-        )
-    except requests.exceptions.ReadTimeout:
-        raise Exception(f"Couldn't reach wttr.in after {timeout_s}s")
+    if not retry_for_an_hour:
+        try:
+            response = requests.get(
+                url,
+                timeout=timeout_s,
+            )
+        except requests.exceptions.ReadTimeout:
+            raise Exception(f"Couldn't reach wttr.in after {timeout_s}s")
+    else:
+        start_time = time.time()
+        trial = 0
+        response = None
+        while time.time() - start_time < 60 * 60:
+            trial += 1
+            try:
+                response = requests.get(
+                    url,
+                    timeout=timeout_s,
+                )
+            except requests.exceptions.ReadTimeout:
+                time.sleep(60 * 5)  # wait 5 minute
+                continue
+            break
+        if response is None:
+            raise Exception(
+                f"Couldn't reach wttr.in after {trial} trials over 1h")
 
     data = json.loads(response.text)
 
