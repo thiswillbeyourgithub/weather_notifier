@@ -20,7 +20,7 @@ def main(
     ntfy_url=None,
     rain_threshold_mm=1.0,
     wttr_url="http://wttr.in/",
-    timeout=5,
+    timeout_s=5,
 ):
     """
     Simple script to parse wttr.in to know if it's going to rain.
@@ -35,18 +35,18 @@ def main(
     rain_threshold_mm: float, default 1.0
 
     wttr_url: str, default 'http://wttr.in/'
-    timeout: int, default 5
-        timeout for wttr.in
+    timeout_s: int, default 5
+        timeout for wttr.in in second
     """
     # getting data
     url = wttr_url + location + "?format=j1"
     try:
         response = requests.get(
             url,
-            timeout=timeout,
+            timeout=timeout_s,
         )
     except requests.exceptions.ReadTimeout:
-        raise Exception(f"Couldn't reach wttr.in after {timeout}s")
+        raise Exception(f"Couldn't reach wttr.in after {timeout_s}s")
 
     data = json.loads(response.text)
 
