@@ -1,3 +1,5 @@
+from datetime import datetime
+from pathlib import Path
 import time
 import json
 import requests
@@ -5,10 +7,15 @@ import fire
 
 DAY_PARSER = ["today", "tomorow", "in 2 days"]
 TIME_PARSER = ["in the morning", "at noon", "in the evening", "at night"]
+LOGDIRPATH = "weather_logging"
+logdir = Path(LOGDIRPATH)
+logdir.mkdir(exist_ok=True)
 
 
 def send_notif(url, title, message):
     "Use ntfy.sh to send a notification on your device"
+    if not message:
+        message = " "
     requests.post(
         url=url,
         headers={"Title": title},
@@ -20,6 +27,8 @@ def main(
     location,
     ntfy_url=None,
     rain_threshold_mm=1.0,
+    n_days_average_temp=3,
+    temp_tolerance=3,
     wttr_url="http://wttr.in/",
     timeout_s=5,
     retry_for_an_hour=True,
@@ -35,6 +44,11 @@ def main(
     ntfy_url: str, defautl to None
         if None, will simply print the output
     rain_threshold_mm: float, default 1.0
+    n_days_average_temp: int, default 3
+       number of days over which to average the temperature to warn you
+    temp_tolerance: int, default 3
+       if the average temperature of today differs by more than
+       this number from the nast n_days_average_temp days, warn user
 
     wttr_url: str, default 'http://wttr.in/'
     timeout_s: int, default 5
@@ -68,18 +82,53 @@ def main(
                 continue
             break
         if response is None:
-            raise Exception(
-                f"Couldn't reach wttr.in after {trial} trials over 1h")
+            raise Exception(f"Couldn't reach wttr.in after {trial} trials over 1h")
 
+    # load the average temperature of the last few days
+    past_logs = sorted([p for p in logdir.rglob("*json")], key=lambda p: int(p.stem))
+    if past_logs:
+        dates = []
+        temperatures = []
+        for logfile in past_logs:
+            with logfile.open("r") as f:
+                data = json.load(f)
+            date = data["weather"][0]["date"]
+            if date in dates:
+                temperatures[-1].append(float(data["weather"][0]["avgtempC"]))
+            else:
+                dates.append(date)
+                temperatures.append([float(data["weather"][0]["avgtempC"])])
+        assert len(dates) == len(temperatures)
+        averages = []
+        for date, data in zip(dates, temperatures):
+            averages.append(sum(data) / len(data))
+        averages = averages[-n_days_average_temp:]
+        reference_temp = sum(averages) / len(averages)
+    else:
+        reference_temp = None
+
+    # load data from the request
     data = json.loads(response.text)
+
+    # save to file
+    with (logdir / (str(int(time.time())) + ".json")).open("w") as f:
+        json.dump(data, f, indent=4)
 
     raining = []
     depth = []
     confidence = []
+    mintemps = []
+    maxtemps = []
+    avgtemps = []
     for iday, day in enumerate(data["weather"]):
         raining.append([])
         buffmm = []
         buffconf = []
+
+        mintemps.append(float(day["mintempC"]))
+        maxtemps.append(float(day["maxtempC"]))
+        avgtemps.append(float(day["avgtempC"]))
+
         for ih, hour in enumerate(day["hourly"]):
             if ih % 2 == 0:
                 buffmm.append(float(hour["precipMM"]))
@@ -98,30 +147,42 @@ def main(
         depth.append(buffmm)
         confidence.append(buffconf)
 
-    if all(not any(r) for r in raining):
-        if ntfy_url:
-            send_notif(ntfy_url, "No rain for the next 2 days", "")
-        else:
-            return "No rain for the next 2 days"
+    message = ""
+    for iday in range(len(raining)):
+        if any(raining[iday]):
+            newline = f"Raining {DAY_PARSER[iday]} "
+            newline += ", ".join(
+                [
+                    f"{TIME_PARSER[ir]} ({depth[iday][ir]}mm {int(confidence[iday][ir]):03d}%)"
+                    for ir, r in enumerate(raining[iday])
+                    if r
+                ]
+            )
+            if "," in newline:
+                newline = newline[::-1].replace(", ", " and ", 1)[::-1]
+            message += newline + "\n"
+
+        if reference_temp:
+            diff = avgtemps[iday] - reference_temp
+            if abs(diff) >= temp_tolerance:
+                adj = "colder" if diff > 0 else "warmer"
+                sign = "-" if diff > 0 else "+"
+                newline = f"Temp: {DAY_PARSER[iday]} {sign}{abs(diff)}: {diff}°C ({mintemps[iday]}°C / {maxtemps[iday]}°C)"
+                message = message.strip() + "\n" + newline
+
+    title = []
+    if "raining" in message.lower():
+        title += ["rain incoming"]
+    if "temp" in message.lower():
+        title += [f"delta temperature of last {n_days_average_temp} days"]
+    if not title:
+        title.append("all good")
+    title = "Weather: " + " & ".join(title).title()
+
+    if ntfy_url:
+        send_notif(ntfy_url, title, message.strip())
     else:
-        message = ""
-        for iday in range(len(raining)):
-            if any(raining[iday]):
-                newline = f"Raining {DAY_PARSER[iday]} "
-                newline += ", ".join(
-                    [
-                        f"{TIME_PARSER[ir]} ({depth[iday][ir]}mm {int(confidence[iday][ir]):03d}%)"
-                        for ir, r in enumerate(raining[iday])
-                        if r
-                    ]
-                )
-                if "," in newline:
-                    newline = newline[::-1].replace(", ", " and ", 1)[::-1]
-                message += newline + "\n"
-        if ntfy_url:
-            send_notif(ntfy_url, "Rain incoming", message.strip())
-        else:
-            return f"Rain incoming\n{message.strip()}"
+        return f"{title}\n{message.strip()}"
 
 
 if __name__ == "__main__":
