@@ -166,9 +166,13 @@ def main(
             diff = avgtemps[iday] - reference_temp
             if abs(diff) >= temp_tolerance:
                 adj = "colder" if diff > 0 else "warmer"
-                sign = "-" if diff > 0 else "+"
-                newline = f"Temp: {DAY_PARSER[iday]} {sign}{abs(diff)}: {diff}°C ({mintemps[iday]}°C / {maxtemps[iday]}°C)"
+                sign = "+" if diff > 0 else "-"
+                newline = f"Temp: {DAY_PARSER[iday]} {int(reference_temp)}->{int(avgtemps[iday])}°C : {sign}{int(abs(diff))}°C ({int(mintemps[iday])}°C / {int(maxtemps[iday])}°C)"
                 message = message.strip() + "\n" + newline
+
+
+    message = message.strip() + "\n\nAverage temperature: " + "°C  ".join([str(int(x)) for x in avgtemps]) + "°C"
+    message = message.strip() + "\nMin/Max temperature: " + "°C  ".join([str(int(x)) + "/" + str(int(y)) for x, y in zip(mintemps, maxtemps)]) + "°C"
 
     title = []
     if "raining" in message.lower():
