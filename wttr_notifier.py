@@ -77,12 +77,12 @@ def main(
                     url,
                     timeout=timeout_s,
                 )
-            except requests.exceptions.ReadTimeout:
+            except Exception as err:
                 time.sleep(60 * 5)  # wait 5 minute
                 continue
             break
         if response is None:
-            raise Exception(f"Couldn't reach wttr.in after {trial} trials over 1h")
+            raise Exception(f"Couldn't reach wttr.in after {trial} trials over 1h. Error was: {err}")
 
     # load the average temperature of the last few days
     past_logs = sorted([p for p in logdir.rglob("*json")], key=lambda p: int(p.stem))
