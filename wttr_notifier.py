@@ -150,7 +150,7 @@ def main(
     message = ""
     for iday in range(len(raining)):
         if any(raining[iday]):
-            newline = f"Raining {DAY_PARSER[iday]} "
+            newline = f"\nRaining {DAY_PARSER[iday]} "
             newline += ", ".join(
                 [
                     f"{TIME_PARSER[ir]} ({depth[iday][ir]}mm {int(confidence[iday][ir]):02d}%)"
@@ -167,9 +167,11 @@ def main(
             if abs(diff) >= temp_tolerance:
                 adj = "colder" if diff > 0 else "warmer"
                 sign = "+" if diff > 0 else "-"
-                newline = f"Temp: {DAY_PARSER[iday]} {int(reference_temp)}->{int(avgtemps[iday])}°C : {sign}{int(abs(diff))}°C ({int(mintemps[iday])}°C / {int(maxtemps[iday])}°C)"
+                newline = f"\nTemp: {DAY_PARSER[iday]} {int(reference_temp)}->{int(avgtemps[iday])}°C : {sign}{int(abs(diff))}°C ({int(mintemps[iday])}°C / {int(maxtemps[iday])}°C)"
                 message = message.strip() + "\n" + newline
 
+    # remove extra newlines
+    message = "\n".join([li.strip() for li in message.splitlines()])
 
     message = message.strip() + "\n\nAverage temperature: " + "°C  ".join([str(int(x)) for x in avgtemps]) + "°C"
     message = message.strip() + "\nMin/Max temperature: " + "°C  ".join([str(int(x)) + "/" + str(int(y)) for x, y in zip(mintemps, maxtemps)]) + "°C"
