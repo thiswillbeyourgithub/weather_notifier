@@ -70,6 +70,7 @@ def main(
         start_time = time.time() - 1
         trial = 0
         response = None
+        err = "No error message yet"
         while time.time() - start_time < 60 * 60:
             trial += 1
             try:
