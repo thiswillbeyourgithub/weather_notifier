@@ -67,7 +67,7 @@ def main(
         except requests.exceptions.ReadTimeout:
             raise Exception(f"Couldn't reach wttr.in after {timeout_s}s")
     else:
-        start_time = time.time()
+        start_time = time.time() - 1
         trial = 0
         response = None
         while time.time() - start_time < 60 * 60:
