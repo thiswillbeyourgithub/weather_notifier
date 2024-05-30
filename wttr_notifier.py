@@ -84,6 +84,7 @@ def main(
                     url,
                     timeout=timeout_s,
                 )
+                json.loads(response.text)  # try to load directly, it would be caught
             except Exception as err:
                 time.sleep(60 * 5)  # wait 5 minute
                 continue
