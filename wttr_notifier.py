@@ -84,6 +84,7 @@ def main(
                     url,
                     timeout=timeout_s,
                 )
+                assert response.status_code == 200, f"Unexpected status code: '{response.status_code}'"
                 json.loads(response.text)  # try to load directly, it would be caught
             except Exception as err:
                 time.sleep(60 * 5)  # wait 5 minute
