@@ -66,6 +66,12 @@ def main(
             )
         except requests.exceptions.ReadTimeout:
             raise Exception(f"Couldn't reach wttr.in after {timeout_s}s")
+        except Exception as err:
+            send_notif(
+                ntfy_url,
+                "Weather notifier - Error",
+                f"Error when requestion weather: '{err}'"
+            )
     else:
         start_time = time.time() - 1
         trial = 0
