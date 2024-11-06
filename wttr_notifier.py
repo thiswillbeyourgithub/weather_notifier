@@ -187,7 +187,7 @@ def main(
     title = []
     if "raining" in message.lower():
         title += ["rain incoming"]
-    if "temp" in message.lower():
+    if "temp: " in message.lower():
         title += [f"delta temperature of last {n_days_average_temp} days"]
     if not title:
         title.append("all good")
