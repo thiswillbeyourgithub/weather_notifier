@@ -32,6 +32,7 @@ def main(
     wttr_url="http://wttr.in/",
     timeout_s=5,
     retry_for_an_hour=True,
+    send_if_all_good=True,
 ):
     """
     Simple script to parse wttr.in to know if it's going to rain.
@@ -55,6 +56,9 @@ def main(
         timeout for wttr.in in second
     retry_for_an_hour: bool, default True
         if True, will retry every 5 minutes for 1h
+    send_if_all_good: bool, default True
+        if True, will send the temperature even if rain is not planned and not
+        drastic temperature change are planned.
     """
     # getting data
     url = wttr_url + location + "?format=j1"
@@ -190,7 +194,10 @@ def main(
     if "temp: " in message.lower():
         title += [f"delta temperature of last {n_days_average_temp} days"]
     if not title:
-        title.append("all good")
+        if send_if_all_good:
+            title.append("all good")
+        else:
+            raise SystemExit()
     title = "Weather: " + " & ".join(title).title()
 
     if ntfy_url:
