@@ -174,7 +174,6 @@ def main(
         if reference_temp:
             diff = avgtemps[iday] - reference_temp
             if abs(diff) >= temp_tolerance:
-                adj = "colder" if diff > 0 else "warmer"
                 sign = "+" if diff > 0 else "-"
                 newline = f"\nTemp: {DAY_PARSER[iday]} {int(reference_temp)}->{int(avgtemps[iday])}°C : {sign}{int(abs(diff))}°C ({int(mintemps[iday])}°C / {int(maxtemps[iday])}°C)"
                 message = message.strip() + "\n" + newline
