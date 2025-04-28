@@ -89,10 +89,11 @@ def main(
                 )
                 assert response.status_code == 200, f"Unexpected status code: '{response.status_code}'"
                 json.loads(response.text)  # try to load directly, it would be caught
-            except Exception:
+                break  # Exit loop on success
+            except Exception as e:
+                err = str(e) # Capture the specific error message
                 time.sleep(60 * 5)  # wait 5 minute
                 continue
-            break
         if response is None:
             raise Exception(f"Couldn't reach wttr.in after {trial} trials over 1h. Error was: {err}")
 
