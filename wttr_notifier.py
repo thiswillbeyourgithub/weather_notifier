@@ -1,6 +1,7 @@
 from pathlib import Path
 import time
 import json
+import traceback
 import requests
 import fire
 
@@ -222,7 +223,9 @@ if __name__ == "__main__":
             send_notif(
                 kwargs["ntfy_url"],
                 "Weather notifier - Error",
-                f"Error when parsing weather: {err}",
+                # Include full traceback so the error is easier to diagnose
+                # remotely without needing to check logs on the machine.
+                f"Error when parsing weather: {err}\n\n{traceback.format_exc()}",
             )
         else:
             raise
