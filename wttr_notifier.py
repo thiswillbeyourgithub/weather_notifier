@@ -105,6 +105,8 @@ def main(
         for logfile in past_logs:
             with logfile.open("r") as f:
                 data = json.load(f)
+            if "weather" not in data and "data" in data and len(data.keys()) == 1:
+                data = data["data"]
             date = data["weather"][0]["date"]
             if date in dates:
                 temperatures[-1].append(float(data["weather"][0]["avgtempC"]))
