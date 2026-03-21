@@ -74,7 +74,7 @@ def main(
             send_notif(
                 ntfy_url,
                 "Weather notifier - Error",
-                f"Error when requestion weather: '{err}'"
+                f"Error when requestion weather: '{err}'",
             )
     else:
         start_time = time.time() - 1
@@ -88,15 +88,19 @@ def main(
                     url,
                     timeout=timeout_s,
                 )
-                assert response.status_code == 200, f"Unexpected status code: '{response.status_code}'"
+                assert response.status_code == 200, (
+                    f"Unexpected status code: '{response.status_code}'"
+                )
                 json.loads(response.text)  # try to load directly, it would be caught
                 break  # Exit loop on success
             except Exception as e:
-                err = str(e) # Capture the specific error message
+                err = str(e)  # Capture the specific error message
                 time.sleep(60 * 5)  # wait 5 minute
                 continue
         if response is None:
-            raise Exception(f"Couldn't reach wttr.in after {trial} trials over 1h. Error was: {err}")
+            raise Exception(
+                f"Couldn't reach wttr.in after {trial} trials over 1h. Error was: {err}"
+            )
 
     # load the average temperature of the last few days
     past_logs = sorted([p for p in logdir.rglob("*json")], key=lambda p: int(p.stem))
@@ -188,8 +192,20 @@ def main(
     # remove extra newlines
     message = "\n".join([li.strip() for li in message.splitlines()])
 
-    message = message.strip() + "\n\nAverage temperature: " + "°C  ".join([str(int(x)) for x in avgtemps]) + "°C"
-    message = message.strip() + "\nMin/Max temperature: " + "°C  ".join([str(int(x)) + "/" + str(int(y)) for x, y in zip(mintemps, maxtemps)]) + "°C"
+    message = (
+        message.strip()
+        + "\n\nAverage temperature: "
+        + "°C  ".join([str(int(x)) for x in avgtemps])
+        + "°C"
+    )
+    message = (
+        message.strip()
+        + "\nMin/Max temperature: "
+        + "°C  ".join(
+            [str(int(x)) + "/" + str(int(y)) for x, y in zip(mintemps, maxtemps)]
+        )
+        + "°C"
+    )
 
     title = []
     if "raining" in message.lower():
